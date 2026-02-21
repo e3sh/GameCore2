@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GameCore Minimal Demo</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+        }
+
+        .info {
+            margin-top: 10px;
+            color: #aaa;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GameCore Minimal Demo</h1>
+    <canvas id="mainCanvas" width="640" height="400"></canvas>
+    <div class="info">WASD or Arrow Keys to move the white square.</div>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+        import { Entity } from '../../src/logic/entity/EntityManager.js';
+
+        // プレイヤークラスの定義
+        class Player extends Entity {
+            constructor() {
+                super();
+                this.x = 320;
+                this.y = 200;
+                this.speed = 5;
+            }
+
+            update(dt) {
+                // 生の入力を直接参照して移動
+                const input = engine.inputRaw.keyboard;
+
+                if (input.isPressed('KeyW') || input.isPressed('ArrowUp')) this.y -= this.speed;
+                if (input.isPressed('KeyS') || input.isPressed('ArrowDown')) this.y += this.speed;
+                if (input.isPressed('KeyA') || input.isPressed('ArrowLeft')) this.x -= this.speed;
+                if (input.isPressed('KeyD') || input.isPressed('ArrowRight')) this.x += this.speed;
+
+                super.update(dt);
+            }
+        }
+
+        // エンジンの初期化
+        const sysParam = {
+            canvasId: "mainCanvas",
+            screen: [
+                { resolution: { w: 640, h: 400 } } // レイヤー0
+            ]
+        };
+
+        const engine = new GameCore(sysParam);
+        window.engine = engine; // デバッグ用
+
+        // エンティティの追加
+        const player = new Player();
+        engine.entities.add(player);
+
+        // カメラがプレイヤーを追うように設定（オプション）
+        // engine.viewport.follow(player);
+
+        // 実行開始
+        engine.run();
+        console.log("GameCore demo started.");
+    </script>
+</body>
+
+</html>

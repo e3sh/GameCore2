@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GameCore Sprite Demo</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+        }
+
+        .info {
+            margin-top: 10px;
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GameCore Sprite Demo</h1>
+    <canvas id="mainCanvas" width="640" height="400"></canvas>
+    <div class="info">Advanced Sprite Rendering: Rotation & Flipping</div>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+
+        const engine = new GameCore({
+            canvasId: "mainCanvas",
+            screen: [{ resolution: { w: 640, h: 400 } }]
+        });
+
+        // アセットのロード
+        await engine.assets.loadImage('robot', '../assets/test_sprite.png');
+
+        // スプライトパターンの設定
+        engine.sprite.setPattern('robot_walk', {
+            imageKey: 'robot',
+            wait: 5,
+            frames: [
+                { x: 0, y: 0, w: 64, h: 64, r: 0, fv: false, fh: false },
+                { x: 0, y: 0, w: 64, h: 64, r: 0, fv: false, fh: true } // 左右反転
+            ]
+        });
+
+        // スプライトアフレの作成
+        const s1 = engine.sprite.createItem('robot_walk', 150, 200);
+        s1.z = 1.5;
+
+        const s2 = engine.sprite.createItem('robot_walk', 320, 200);
+        s2.r = 45; // 45度回転
+
+        const s3 = engine.sprite.createItem('robot_walk', 490, 200);
+        s3.alpha = 128; // 半透明
+
+        // 回転アニメーション
+        setInterval(() => {
+            s2.r = (s2.r + 5) % 360;
+        }, 30);
+
+        engine.run();
+    </script>
+</body>
+
+</html>

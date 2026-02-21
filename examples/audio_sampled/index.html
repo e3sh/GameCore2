@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GameCore Sampled Audio Demo</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .info {
+            color: #aaa;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GameCore Sampled Audio Demo</h1>
+    <canvas id="mainCanvas" width="640" height="200"></canvas>
+
+    <div class="controls">
+        <div class="row">
+            <button id="btnPlayBGM">Play BGM (Loop)</button>
+            <button id="btnStopBGM">Stop BGM</button>
+        </div>
+        <div class="row">
+            <button id="btnPlaySE">Play SE</button>
+            <button id="btnPlayBeep">Play Beep (Synth)</button>
+        </div>
+        <div>
+            Volume: <input type="range" id="volumeRange" min="0" max="1" step="0.1" value="0.5">
+        </div>
+    </div>
+    <p class="info">※ このデモを動作させるには、実際の音声ファイルを <code>examples/assets/</code> に配置してください。</p>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+
+        const engine = new GameCore({
+            canvasId: "mainCanvas",
+            screen: [{ resolution: { w: 640, h: 200 } }]
+        });
+
+        // アセットのロード（ダミーパス）
+        // 実際には有効なMP3/WAVファイルを配置してパスを指定してください
+        const bgmPath = 'bgm.mp3';
+        const sePath = 'se.mp3';
+
+        console.log("Loading sampled audio...");
+        try {
+            await engine.assets.loadAudio('bgm', bgmPath, engine.sound.ctx);
+            await engine.assets.loadAudio('se', sePath, engine.sound.ctx);
+            console.log("Audio assets loaded.");
+        } catch (e) {
+            console.warn("Audio load failed (files might be missing). Using buttons will result in errors if files don't exist.");
+        }
+
+        engine.run();
+
+        // UIイベント
+        document.getElementById('btnPlayBGM').onclick = () => {
+            const buffer = engine.assets.getSound('bgm');
+            if (buffer) {
+                engine.sound.playBGM(buffer, true);
+            } else {
+                alert("BGMファイルが見つかりません。examples/assets/bgm.mp3 を配置してください。");
+            }
+        };
+
+        document.getElementById('btnStopBGM').onclick = () => {
+            engine.sound.stopBGM();
+        };
+
+        document.getElementById('btnPlaySE').onclick = () => {
+            const buffer = engine.assets.getSound('se');
+            if (buffer) {
+                engine.sound.playSE(buffer);
+            } else {
+                alert("SEファイルが見つかりません。examples/assets/se.wav を配置してください。");
+            }
+        };
+
+        document.getElementById('btnPlayBeep').onclick = () => {
+            engine.sound.playScore(["C4", "G4", "C5"], 100, performance.now());
+        };
+
+        document.getElementById('volumeRange').oninput = (e) => {
+            engine.sound.setMasterVolume(parseFloat(e.target.value));
+        };
+    </script>
+</body>
+
+</html>

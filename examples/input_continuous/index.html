@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GameCore Continuous Input Demo</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+        }
+
+        .info {
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .status {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 10px;
+            min-width: 300px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GameCore Continuous Input Demo</h1>
+    <canvas id="mainCanvas" width="640" height="360"></canvas>
+    <div class="status" id="statusDisplay">
+        Mouse: (0, 0) | Delta: (0, 0) | Wheel: 0<br>
+        Stick L: (0.00, 0.00) | Stick R: (0.00, 0.00)
+    </div>
+    <div class="info">
+        マウス：赤い点の移動 | ホイール：円の拡大縮小<br>
+        ゲームパッド：Lスティックで円の移動、Rスティックでログ表示
+    </div>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+
+        const engine = new GameCore({
+            canvasId: "mainCanvas",
+            screen: [{ resolution: { w: 640, h: 360 } }]
+        });
+
+        // 軸のマッピング
+        engine.input.bindAxis('MoveX', 'gamepad', 0); // L-Stick X
+        engine.input.bindAxis('MoveY', 'gamepad', 1); // L-Stick Y
+        engine.input.bindAxis('LookX', 'gamepad', 2); // R-Stick X
+        engine.input.bindAxis('LookY', 'gamepad', 3); // R-Stick Y
+        engine.input.bindAxis('Zoom', 'mouse', 'wheel', -0.01); // Mouse Wheel
+
+        let playerX = 320;
+        let playerY = 180;
+        let playerSize = 30;
+
+        const statusDisplay = document.getElementById('statusDisplay');
+
+        // メインループの拡張
+        engine.draw = () => {
+            // ベースの描画処理をインライン化して制御（presentのタイミングを調整）
+            engine.display.clearAll();
+            engine.scenes.draw(engine.display);
+            engine.entities.draw(engine.display, engine.viewport);
+            engine.sprite.draw(engine.display, engine.viewport);
+
+            const layer = engine.display.getLayer(0);
+            const ctx = layer.ctx;
+
+            // 円の描画（カスタム描画部分）
+            ctx.fillStyle = "cyan";
+            ctx.beginPath();
+            ctx.arc(playerX, playerY, playerSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // マウス位置に小さな点
+            ctx.fillStyle = "red";
+            ctx.fillRect(engine.inputRaw.mouse.x - 2, engine.inputRaw.mouse.y - 2, 4, 4);
+
+            // 最後にメインキャンバスへ転送
+            engine.display.present();
+        };
+
+        const originalUpdate = engine.update.bind(engine);
+        engine.update = () => {
+            originalUpdate();
+
+            // 軸入力の取得
+            const mx = engine.input.getAxis('MoveX');
+            const my = engine.input.getAxis('MoveY');
+            const lx = engine.input.getAxis('LookX');
+            const ly = engine.input.getAxis('LookY');
+            const zoom = engine.input.getAxis('Zoom');
+
+            playerX += mx * 5;
+            playerY += my * 5;
+            playerSize = Math.max(5, playerSize + zoom);
+
+            // ステータス表示の更新
+            statusDisplay.innerHTML = `
+                Mouse: (${Math.floor(engine.inputRaw.mouse.x)}, ${Math.floor(engine.inputRaw.mouse.y)}) | 
+                Delta: (${engine.inputRaw.mouse.dx}, ${engine.inputRaw.mouse.dy}) | 
+                Wheel (accum): ${Math.floor(playerSize)}<br>
+                Stick L: (${mx.toFixed(2)}, ${my.toFixed(2)}) | 
+                Stick R: (${lx.toFixed(2)}, ${ly.toFixed(2)})
+            `;
+        };
+
+        engine.run();
+    </script>
+</body>
+
+</html>

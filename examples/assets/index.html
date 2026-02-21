@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GameCore Asset & Sound Demo</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GameCore Asset & Sound Demo</h1>
+    <canvas id="mainCanvas" width="640" height="400"></canvas>
+
+    <div class="controls">
+        <button id="btnPlaySound">Play Melody</button>
+        <button id="btnSpawnRobot">Spawn Robot</button>
+    </div>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+        import { Entity } from '../../src/logic/entity/EntityManager.js';
+
+        // スプライトを表示するエンティティ
+        class Robot extends Entity {
+            constructor(x, y, image) {
+                super();
+                this.x = x;
+                this.y = y;
+                this.image = image;
+                this.width = 64;
+                this.height = 64;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+            }
+
+            draw(display, viewport) {
+                const screenPos = viewport.worldToScreen(this.x, this.y);
+                const layer = display.getLayer(0);
+                if (this.image) {
+                    layer.ctx.drawImage(this.image, screenPos.x, screenPos.y, this.width, this.height);
+                }
+            }
+        }
+
+        const engine = new GameCore({
+            canvasId: "mainCanvas",
+            screen: [{ resolution: { w: 640, h: 400 } }]
+        });
+
+        // アセットのロード
+        console.log("Loading assets...");
+        await engine.assets.loadImage('robot', './test_sprite.png');
+        console.log("Assets loaded.");
+
+        engine.run();
+
+        // UIイベント
+        document.getElementById('btnPlaySound').onclick = () => {
+            // Beepcore でメロディを鳴らす
+            const melody = ["C4", "E4", "G4", "C5", "G4", "E4", "C4"];
+            engine.sound.playScore(melody, 150, performance.now());
+        };
+
+        document.getElementById('btnSpawnRobot').onclick = () => {
+            const img = engine.assets.getImage('robot');
+            engine.entities.add(new Robot(320, 200, img));
+        };
+    </script>
+</body>
+
+</html>

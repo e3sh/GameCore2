@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GameCore Full Features Demo</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+        }
+
+        .info {
+            margin-top: 10px;
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GameCore Full Features Demo</h1>
+    <div id="gameContainer" style="position:relative;">
+        <canvas id="mainCanvas" width="640" height="400"></canvas>
+        <div id="overlay"
+            style="position:absolute; top:0; left:0; width:640px; height:400px; background:rgba(0,0,0,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100;">
+            <button id="startButton"
+                style="padding:15px 40px; font-size:24px; cursor:pointer; background:#555; color:white; border:2px solid #888; border-radius:8px; font-weight:bold;">CLICK
+                TO START</button>
+            <p style="color:#888; margin-top:15px; font-size:12px;">※ブラウザの制限により、音を出すにはボタン操作が必要です</p>
+        </div>
+    </div>
+    <div class="info">WASD to Move / Space to Jump<br>Reach the Red Box!</div>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+        import { Entity } from '../../src/logic/entity/EntityManager.js';
+        import { PhysicsBehavior } from '../../src/logic/entity/PhysicsBehavior.js';
+        import { BaseScene } from '../../src/logic/scene/SceneSystem.js';
+
+        // --- シーン定義 ---
+
+        class TitleScene extends BaseScene {
+            update(dt) {
+                if (this.engine.input.isDown('Jump')) {
+                    this.engine.scenes.replace(new GameScene(this.engine));
+                }
+            }
+            draw(display) {
+                const layer = display.getLayer(0);
+                layer.ctx.fillStyle = "white";
+                layer.ctx.font = "30px Arial";
+                layer.ctx.textAlign = "center";
+                layer.ctx.fillText("GameCore Engine", 320, 180);
+                layer.ctx.font = "20px Arial";
+                layer.ctx.fillText("Press SPACE to Start", 320, 240);
+            }
+        }
+
+        class GameScene extends BaseScene {
+            init() {
+                // プレイヤーの作成
+                const player = new Entity();
+                player.x = 50;
+                player.y = 300;
+                player.width = 30;
+                player.height = 30;
+                const physics = player.addBehavior(new PhysicsBehavior({ groundY: 380 }));
+
+                // カスタム挙動（入力制御）
+                let transitioning = false;
+                player.addBehavior({
+                    onAttach: (e) => this.p = e,
+                    update: (dt) => {
+                        const input = this.engine.input;
+                        this.p.vx = 0;
+                        if (input.isPressed('Left')) this.p.vx = -4;
+                        if (input.isPressed('Right')) this.p.vx = 4;
+                        if (input.isDown('Jump') && physics.isGrounded) {
+                            this.p.vy = -10;
+                            this.engine.sound.playScore(["G4", "B4", "D5"], 60, performance.now());
+                        }
+                    },
+                    onCollision: (other) => {
+                        if (!transitioning && other.tag === 'goal') {
+                            transitioning = true;
+                            this.engine.scenes.replace(new ResultScene(this.engine));
+                        }
+                    }
+                });
+                this.engine.entities.add(player);
+                this.engine.viewport.follow(player);
+
+                // ゴール地点
+                const goal = new Entity();
+                goal.x = 550; goal.y = 340;
+                goal.width = 40; goal.height = 40;
+                goal.tag = 'goal';
+                goal.color = 'red';
+                this.engine.entities.add(goal);
+            }
+
+            draw(display) {
+                const layer = display.getLayer(0);
+                const viewport = this.engine.viewport;
+
+                // 地面をワールド座標 (0, 380) から描画
+                const screenPos = viewport.worldToScreen(0, 380);
+
+                layer.ctx.fillStyle = "#333";
+                // 地面は横に長いので、Xは0から画面幅、Yだけワールド座標に従う
+                layer.ctx.fillRect(0, screenPos.y, 640, 20);
+            }
+        }
+
+        class ResultScene extends BaseScene {
+            onEnter() {
+                this.engine.sound.playScore(["C5", "E5", "G5", "C6"], 100, performance.now());
+            }
+            update(dt) {
+                if (this.engine.input.isDown('Jump')) {
+                    this.engine.entities.entities = []; // クリア
+                    this.engine.scenes.replace(new TitleScene(this.engine));
+                }
+            }
+            draw(display) {
+                const layer = display.getLayer(0);
+                layer.ctx.fillStyle = "gold";
+                layer.ctx.font = "40px Arial";
+                layer.ctx.textAlign = "center";
+                layer.ctx.fillText("CLEAR!", 320, 200);
+                layer.ctx.font = "20px Arial";
+                layer.ctx.fillText("Press SPACE to Title", 320, 260);
+            }
+        }
+
+        // --- エンジン起動 ---
+
+        const engine = new GameCore({
+            canvasId: "mainCanvas",
+            screen: [{ resolution: { w: 640, h: 400 } }]
+        });
+
+        // キーバインド設定
+        engine.input.bind('Left', 'keyboard', 'KeyA');
+        engine.input.bind('Right', 'keyboard', 'KeyD');
+        engine.input.bind('Jump', 'keyboard', 'Space');
+
+        // 初期シーン設定
+        engine.scenes.push(new TitleScene(engine));
+
+        // --- 起動と音響の再開処理 ---
+        const startButton = document.getElementById('startButton');
+        const overlay = document.getElementById('overlay');
+
+        startButton.addEventListener('click', () => {
+            // 明示的なユーザー操作によりオーディオを再開
+            engine.sound.resume();
+            overlay.style.display = 'none';
+            // エンジン起動
+            engine.run();
+        });
+    </script>
+</body>
+
+</html>
