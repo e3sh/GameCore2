@@ -1,8 +1,9 @@
 import { CollisionSystem } from '../collision/CollisionSystem.js?v=10';
 
 /**
+ * 全てのゲームオブジェクトの基底クラス。
+ * Behavior（コンポーネント）を追加することで機能が拡張されます。
  * @class Entity
- * @description 全てのゲームオブジェクトの基底クラス。
  */
 export class Entity {
     constructor() {
@@ -18,6 +19,12 @@ export class Entity {
         this.behaviors = [];
     }
 
+    /**
+     * Entityに新しいBehavior（コンポーネント）を追加します。
+     * @method addBehavior
+     * @param {Behavior} behavior - 追加するBehaviorインスタンス
+     * @returns {Behavior} 追加したインスタンス
+     */
     addBehavior(behavior) {
         this.behaviors.push(behavior);
         if (typeof behavior.onAttach === 'function') {
@@ -26,14 +33,31 @@ export class Entity {
         return behavior;
     }
 
+    /**
+     * 指定されたクラス名を持つ最初のBehaviorを取得します。
+     * @method getBehavior
+     * @param {string} className - クラス名（例："SpriteBehavior"）
+     * @returns {Behavior|undefined} 見つかったBehavior
+     */
     getBehavior(className) {
         return this.behaviors.find(b => b.constructor.name === className);
     }
 
+    /**
+     * 指定されたクラス名を持つ全てのBehaviorの配列を取得します。
+     * @method getBehaviors
+     * @param {string} className - クラス名
+     * @returns {Behavior[]}
+     */
     getBehaviors(className) {
         return this.behaviors.filter(b => b.constructor.name === className);
     }
 
+    /**
+     * Entityおよび追加された全ての有効なBehaviorを更新します。
+     * @method update
+     * @param {number} dt - デルタタイム
+     */
     update(dt) {
         this.behaviors.forEach(b => {
             if (b.enabled !== false && typeof b.update === 'function') {
@@ -44,6 +68,13 @@ export class Entity {
         this.y += this.vy * (dt / 16);
     }
 
+    /**
+     * 衝突判定システムから衝突検知時に呼び出されます。
+     * 全ての有効なBehaviorに衝突イベントを伝播させます。
+     * @method onCollision
+     * @param {Entity} other - 衝突相手
+     * @param {Object} colData - 衝突の詳細情報
+     */
     onCollision(other, colData) {
         this.behaviors.forEach(b => {
             if (b.enabled !== false && typeof b.onCollision === 'function') {
@@ -52,6 +83,12 @@ export class Entity {
         });
     }
 
+    /**
+     * EntityおよびそのBehaviorを描画します。
+     * @method draw
+     * @param {DisplayManager} display - 描画管理システム
+     * @param {Viewport} viewport - ゲームカメラ
+     */
     draw(display, viewport) {
         let drawHandled = false;
 
@@ -101,8 +138,8 @@ export class Entity {
 }
 
 /**
+ * エンティティの生成、更新、描画をライフサイクルとして管理するコンテナクラス。
  * @class EntityManager
- * @description エンティティの生成、更新、描画を管理。
  */
 export class EntityManager {
     constructor(engine) {
@@ -111,11 +148,22 @@ export class EntityManager {
         this.collision = new CollisionSystem();
     }
 
+    /**
+     * 新しいEntityを管理下に追加し、衝突判定システムにも登録します。
+     * @method add
+     * @param {Entity} entity
+     */
     add(entity) {
         this.entities.push(entity);
         this.collision.register(entity);
     }
 
+    /**
+     * 登録された全ての有効なEntityの更新処理、及び衝突判定を実行します。
+     * 死亡フラグが立ったEntityは除外されます。
+     * @method update
+     * @param {number} dt - デルタタイム
+     */
     update(dt) {
         this.entities = this.entities.filter(e => {
             if (!e.alive) {
@@ -131,6 +179,12 @@ export class EntityManager {
         this.collision.checkCollisions();
     }
 
+    /**
+     * 全ての有効なEntityの描画メソッドを呼び出します。
+     * @method draw
+     * @param {DisplayManager} display 
+     * @param {Viewport} viewport 
+     */
     draw(display, viewport) {
         this.entities.forEach(e => e.draw(display, viewport));
     }

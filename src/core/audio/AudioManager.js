@@ -1,9 +1,8 @@
 import { Beepcore } from './Beepcore.js';
 
 /**
+ * シンセサイザー(Beepcore)とサンプリング音源(MP3/WAV)を統合して管理するクラス。
  * @class AudioManager
- * @description
- * シンセサイザー(Beepcore)とサンプリング音源(MP3/WAV)を統合して管理する。
  */
 export class AudioManager {
     constructor() {
@@ -21,8 +20,9 @@ export class AudioManager {
     }
 
     /**
+     * ブラウザの制限（自動再生ポリシー）により停止しているAudioContextを再開します。
      * @method resume
-     * ブラウザの制限により停止しているAudioContextを再開します。
+     * @returns {Promise<void>}
      */
     async resume() {
         if (this.ctx.state !== 'running') {
@@ -31,8 +31,11 @@ export class AudioManager {
     }
 
     /**
+     * Beepcore (シンセサイザー) を使用してメロディを再生します。
      * @method playScore
-     * Beepcore (シンセ) でメロディを再生。
+     * @param {string} namelist - MMLに似た音符文字列群
+     * @param {number} interval - 音符ごとの長さの基準値
+     * @param {number} now - AudioContextのcurrentTimeに等しい基準時間
      */
     playScore(namelist, interval, now) {
         this.resume();
@@ -40,9 +43,10 @@ export class AudioManager {
     }
 
     /**
+     * サンプリング音源（効果音）を再生します。複数同時再生が可能です。
      * @method playSE
-     * @param {AudioBuffer} buffer 
-     * @param {number} vol 
+     * @param {AudioBuffer} buffer - AssetManagerで読み込んだAudioBuffer
+     * @param {number} [vol=1.0] - 音声のボリューム（0.0〜1.0）
      */
     playSE(buffer, vol = 1.0) {
         this.resume();
@@ -56,9 +60,10 @@ export class AudioManager {
     }
 
     /**
+     * サンプリング音源（BGM）を再生します。現在再生中のBGMは停止されます。
      * @method playBGM
-     * @param {AudioBuffer} buffer 
-     * @param {boolean} loop 
+     * @param {AudioBuffer} buffer - AssetManagerで読み込んだAudioBuffer
+     * @param {boolean} [loop=true] - ループ再生するかどうか
      */
     playBGM(buffer, loop = true) {
         this.resume();
@@ -73,6 +78,7 @@ export class AudioManager {
     }
 
     /**
+     * 現在再生中のBGMを停止します。
      * @method stopBGM
      */
     stopBGM() {
@@ -82,11 +88,22 @@ export class AudioManager {
         }
     }
 
+    /**
+     * 全体のマスターボリュームを設定します。
+     * @method setMasterVolume
+     * @param {number} vol - 音量（0.0〜1.0）
+     */
     setMasterVolume(vol) {
         this.masterVolNode.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
         this.beep.setMasterVolume(vol);
     }
 
+    /**
+     * シンセサイザー音源（Beepcore）の内部状態を更新します。
+     * ゲームループなどから定期的に呼び出す必要があります。
+     * @method step
+     * @param {number} now - タイムスタンプ
+     */
     step(now) {
         this.beep.step(now);
     }

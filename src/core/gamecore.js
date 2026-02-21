@@ -11,10 +11,18 @@ import { EventBus } from '../utils/EventBus.js';
 import { ParticleSystem } from '../logic/systems/ParticleSystem.js';
 
 /**
+ * エンジンの統合エントリクラス。
+ * 表示、入力、音声、アセット、エンティティ、シーンなどの主要システムを統括します。
  * @class GameCore
- * @description 新エンジンの統合エントリ。
  */
 export class GameCore {
+    /**
+     * @constructor
+     * @param {Object} sysParam - システム初期化パラメータ
+     * @param {string} sysParam.canvasId - メインキャンバスのHTML要素ID
+     * @param {Array<{resolution: {w: number, h: number}}>} sysParam.screen - 各レイヤーの解像度設定の配列
+     * @param {{w: number, h: number}} [sysParam.viewport] - ビューポート（カメラ）のサイズ設定（省略時は 640x480）
+     */
     constructor(sysParam) {
         console.log("GameCore initializing...");
 
@@ -41,6 +49,10 @@ export class GameCore {
         };
     }
 
+    /**
+     * ゲームループを開始します。
+     * @method run
+     */
     run() {
         if (this.status.isRunning) return;
         this.status.isRunning = true;
@@ -62,6 +74,10 @@ export class GameCore {
         requestAnimationFrame(loop);
     }
 
+    /**
+     * エンジン内の全システムの状態を更新します（1フレームごとの処理）。
+     * @method update
+     */
     update() {
         const dt = this.status.deltaTime;
 
@@ -75,6 +91,10 @@ export class GameCore {
         this.sound.step(this.status.lastTime);
     }
 
+    /**
+     * エンジン内の全システムの描画処理を行います。
+     * @method draw
+     */
     draw() {
         this.display.clearAll();
 
@@ -86,6 +106,10 @@ export class GameCore {
         this.display.present();
     }
 
+    /**
+     * ゲームループを停止します。
+     * @method stop
+     */
     stop() {
         this.status.isRunning = false;
     }

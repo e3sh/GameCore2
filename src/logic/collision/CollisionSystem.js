@@ -1,23 +1,40 @@
 /**
+ * AABBベースのエンティティ間の衝突判定を管理・実行するシステム。
  * @class CollisionSystem
- * @description
- * エンティティ間の衝突判定を管理。
  */
 export class CollisionSystem {
+    /**
+     * @constructor
+     */
     constructor() {
         this.entities = [];
     }
 
+    /**
+     * 衝突判定の対象としてEntityを登録します。
+     * @method register
+     * @param {Entity} entity
+     */
     register(entity) {
         if (!this.entities.includes(entity)) {
             this.entities.push(entity);
         }
     }
 
+    /**
+     * 衝突判定の対象からEntityを解除します。
+     * @method unregister
+     * @param {Entity} entity
+     */
     unregister(entity) {
         this.entities = this.entities.filter(e => e !== entity);
     }
 
+    /**
+     * 登録された全ての有効なEntity間で総当たりによる矩形衝突判定を実行します。
+     * 衝突を検知した場合、各Entityの onCollision を発火させます。
+     * @method checkCollisions
+     */
     checkCollisions() {
         for (let i = 0; i < this.entities.length; i++) {
             for (let j = i + 1; j < this.entities.length; j++) {
@@ -45,6 +62,13 @@ export class CollisionSystem {
         }
     }
 
+    /**
+     * 2つのEntityのAABB（Axis-Aligned Bounding Box）をもとに詳細な衝突情報を計算します。
+     * @method getCollisionData
+     * @param {Entity} a - 判定対象A
+     * @param {Entity} b - 判定対象B
+     * @returns {{overlapX: number, overlapY: number, dx: number, dy: number}|null} 衝突していればその詳細、していなければnull
+     */
     getCollisionData(a, b) {
         const aHalfW = (a.width || 32) / 2;
         const aHalfH = (a.height || 32) / 2;

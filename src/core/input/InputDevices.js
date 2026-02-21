@@ -1,6 +1,6 @@
 /**
+ * 生のキーボード入力を管理するクラス。
  * @class KeyboardDevice
- * @description 生のキーボード入力を管理。
  */
 class KeyboardDevice {
     constructor() {
@@ -13,14 +13,20 @@ class KeyboardDevice {
         });
     }
 
+    /**
+     * 指定されたキーが現在押されているか判定します。
+     * @method isPressed
+     * @param {string} code - キーコード (例: "Space", "ArrowUp")
+     * @returns {boolean} 押されていればtrue
+     */
     isPressed(code) {
         return !!this.keys[code];
     }
 }
 
 /**
+ * 生のマウス入力を管理するクラス。
  * @class MouseDevice
- * @description 生のマウス入力を管理。
  */
 class MouseDevice {
     constructor(element) {
@@ -55,6 +61,10 @@ class MouseDevice {
         }, { passive: true });
     }
 
+    /**
+     * マウスの移動量やホイールの回転量を計算・更新します。
+     * @method update
+     */
     update() {
         // マウス移動量の算出
         this.dx = this.x - this.lastX;
@@ -67,14 +77,20 @@ class MouseDevice {
         this._wheelAccum = 0;
     }
 
+    /**
+     * 指定されたマウスボタンが現在押されているか判定します。
+     * @method isPressed
+     * @param {number} button - ボタン番号 (0: 左, 1: 中, 2: 右)
+     * @returns {boolean} 押されていればtrue
+     */
     isPressed(button) {
         return !!this.buttons[button];
     }
 }
 
 /**
+ * ゲームパッドの状態を管理するクラス。
  * @class GamepadDevice
- * @description ゲームパッドの状態を管理。
  */
 class GamepadDevice {
     constructor() {
@@ -85,23 +101,43 @@ class GamepadDevice {
     }
 
     /**
+     * 毎フレーム呼び出してゲームパッドの状態をポーリングします。
      * @method update
-     * 毎フレーム呼び出して状態をポーリング。
      */
     update() {
         this.gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
     }
 
+    /**
+     * 指定したインデックスのゲームパッド情報を取得します。
+     * @method getGamepad
+     * @param {number} [index=0] - ゲームパッドのインデックス
+     * @returns {Gamepad|null} ゲームパッドオブジェクト
+     */
     getGamepad(index = 0) {
         return this.gamepads[index];
     }
 
+    /**
+     * 指定したボタンが押されているか判定します。
+     * @method isButtonPressed
+     * @param {number} buttonIndex - ボタンのインデックス (0~17等)
+     * @param {number} [gpadIndex=0] - ゲームパッドのインデックス
+     * @returns {boolean} 押されていればtrue
+     */
     isButtonPressed(buttonIndex, gpadIndex = 0) {
         const gp = this.getGamepad(gpadIndex);
         if (!gp || !gp.buttons[buttonIndex]) return false;
         return gp.buttons[buttonIndex].pressed;
     }
 
+    /**
+     * 指定したアナログスティックの入力値（-1.0 〜 1.0）を取得します。
+     * @method getAxis
+     * @param {number} axisIndex - 軸のインデックス
+     * @param {number} [gpadIndex=0] - ゲームパッドのインデックス
+     * @returns {number} 軸の入力値
+     */
     getAxis(axisIndex, gpadIndex = 0) {
         const gp = this.getGamepad(gpadIndex);
         if (!gp || !gp.axes[axisIndex]) return 0;
@@ -110,8 +146,8 @@ class GamepadDevice {
 }
 
 /**
+ * 全ての物理入力デバイス（キーボード、マウス、ゲームパッド）を統括するクラス。
  * @class InputDevices
- * @description 全ての物理入力デバイスを統括。
  */
 export class InputDevices {
     constructor(element) {
@@ -120,6 +156,10 @@ export class InputDevices {
         this.gamepad = new GamepadDevice();
     }
 
+    /**
+     * 全ての入力デバイスの状態を更新します。
+     * @method update
+     */
     update() {
         this.mouse.update();
         this.gamepad.update();

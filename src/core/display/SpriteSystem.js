@@ -1,13 +1,18 @@
 /**
+ * 個々のスプライトアイテムの状態を保持するデータクラス。
  * @class SpriteItem
- * @description
- * 個々のスプライトアイテムの状態を保持する。
  */
 class SpriteItem {
+    /**
+     * @constructor
+     */
     constructor() {
         this.reset();
     }
-
+    /**
+     * スプライトの状態を初期値にリセットします。
+     * @method reset
+     */
     reset() {
         this.x = 0;
         this.y = 0;
@@ -24,7 +29,11 @@ class SpriteItem {
         this.alpha = 255;
         this.living = true;
     }
-
+    /**
+     * スプライトの状態を更新します。
+     * @method update
+     * @param {number} dt - デルタタイム
+     */
     update(dt) {
         if (!this.living) return;
         this.alive -= dt;
@@ -37,11 +46,14 @@ class SpriteItem {
 }
 
 /**
+ * 登録されたアニメーションパターンに基づき、大量の軽量スプライトを表示・管理するシステム。
  * @class SpriteSystem
- * @description
- * 登録されたアニメーションパターンに基づき、大量の軽量スプライトを表示・管理する。
  */
 export class SpriteSystem {
+    /**
+     * @constructor
+     * @param {GameCore} engine - 対象のゲームエンジンインスタンス
+     */
     constructor(engine) {
         this.engine = engine;
         this.patterns = new Map();
@@ -50,20 +62,25 @@ export class SpriteSystem {
     }
 
     /**
+     * スプライトパターンの設定を行います。
      * @method setPattern
-     * @param {string} id 
-     * @param {Object} param { imageKey, wait, frames: [{x, y, w, h, r, fv, fh}] }
+     * @param {string} id - パターンのID
+     * @param {Object} param - パターンの詳細プロパティ
+     * @param {string} param.imageKey - AssetsManagerで登録した画像キー
+     * @param {number} [param.wait] - フレーム切り替えのウェイト数（60FPS=1基準）
+     * @param {Array<{x:number, y:number, w:number, h:number, r?:number, fv?:boolean, fh?:boolean}>} param.frames - アニメーションフレーム配列
      */
     setPattern(id, param) {
         this.patterns.set(id, param);
     }
 
     /**
+     * 新しいスプライトアイテムを作成してシステムに登録します。
      * @method createItem
-     * @param {string} patternId 
-     * @param {number} x 
-     * @param {number} y 
-     * @returns {SpriteItem}
+     * @param {string} patternId - 割り当てるパターンのID
+     * @param {number} [x=0] - 初期X座標
+     * @param {number} [y=0] - 初期Y座標
+     * @returns {SpriteItem} 生成されたスプライトアイテム
      */
     createItem(patternId, x = 0, y = 0) {
         const item = new SpriteItem();
@@ -75,7 +92,11 @@ export class SpriteSystem {
         this.items.push(item);
         return item;
     }
-
+    /**
+     * 登録された全スプライトアイテムの状態やアニメーションを更新します。
+     * @method update
+     * @param {number} dt - デルタタイム
+     */
     update(dt) {
         this.items = this.items.filter(item => item.living);
         this.items.forEach(item => {
@@ -97,7 +118,12 @@ export class SpriteSystem {
             }
         });
     }
-
+    /**
+     * 全スプライトを現在のビューポートとレイヤーに基づき描画します。
+     * @method draw
+     * @param {DisplayManager} display - 描画管理システム
+     * @param {Viewport} viewport - ゲームのビューポート
+     */
     draw(display, viewport) {
         const layer = display.getLayer(this.activeScreenIndex);
 
