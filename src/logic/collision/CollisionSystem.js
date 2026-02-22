@@ -70,6 +70,14 @@ export class CollisionSystem {
      * @returns {{overlapX: number, overlapY: number, dx: number, dy: number}|null} 衝突していればその詳細、していなければnull
      */
     getCollisionData(a, b) {
+        // トップビューなどのZ軸を考慮した判定
+        // Z座標の差が大きい場合（例：ジャンプ中など）は衝突していないとみなす。
+        // （サイドビューの場合はz=0が保たれるためこの判定をパスする想定）
+        const zThreshold = 20; // 衝突とみなす高さの許容差
+        if (Math.abs((a.z || 0) - (b.z || 0)) > zThreshold) {
+            return null; // 高さが違いすぎるため衝突しない
+        }
+
         const aHalfW = (a.width || 32) / 2;
         const aHalfH = (a.height || 32) / 2;
         const bHalfW = (b.width || 32) / 2;

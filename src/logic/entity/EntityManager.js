@@ -9,14 +9,18 @@ export class Entity {
     constructor() {
         this.x = 0;
         this.y = 0;
+        this.z = 0; // 高さ
         this.vx = 0;
         this.vy = 0;
+        this.vz = 0; // 高さの速度
         this.width = 32;
         this.height = 32;
         this.alive = true;
         this.collisionEnabled = true;
         this.color = 'white';
         this.behaviors = [];
+        this.zOrder = 0; // 基本の描画順
+        this.engine = null; // EntityManagerからセットされる
     }
 
     /**
@@ -154,6 +158,7 @@ export class EntityManager {
      * @param {Entity} entity
      */
     add(entity) {
+        entity.engine = this.engine;
         this.entities.push(entity);
         this.collision.register(entity);
     }
@@ -186,6 +191,19 @@ export class EntityManager {
      * @param {Viewport} viewport 
      */
     draw(display, viewport) {
-        this.entities.forEach(e => e.draw(display, viewport));
+        // 描画順のソート
+        // 基本的には zOrder (デフォルト0) でソートする。
+        // トップビューの場合かつ zOrder が同じなら、画面下（y が大きい）ものを手前に描画するよう Y ソートをかける。
+        const sortedEntities = this.entities.slice().sort((a, b) => {
+            if (a.zOrder !== b.zOrder) {
+                return a.zOrder - b.zOrder;
+            }
+            if (this.engine.viewMode === 'top') {
+                return a.y - b.y;
+            }
+            return 0;
+        });
+
+        sortedEntities.forEach(e => e.draw(display, viewport));
     }
 }

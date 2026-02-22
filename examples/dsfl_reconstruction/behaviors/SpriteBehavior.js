@@ -15,7 +15,8 @@ export class SpriteBehavior extends Behavior {
         this.sy = options.sy || 0;
         this.sw = options.sw || 32;
         this.sh = options.sh || 32;
-        this.z = options.z !== undefined ? options.z : 1.0;
+        // heightを示すzと混同しないよう、scaleに変更（互換性のため旧zもフォールバックとして残す）
+        this.scale = options.scale !== undefined ? options.scale : (options.z !== undefined ? options.z : 1.0);
         this.alpha = options.alpha !== undefined ? options.alpha : 255;
         this.rotation = options.rotation || 0;
         this.flipX = options.flipX || false;
@@ -43,8 +44,15 @@ export class SpriteBehavior extends Behavior {
         const m11 = this.flipX ? -1 : 1;
         const m22 = this.flipY ? -1 : 1;
 
-        const dw = this.sw * this.z;
-        const dh = this.sh * this.z;
+        // トップビューの場合は高さを擬似的に拡大率で表現
+        let currentScale = this.scale;
+        if (this.engine.viewMode === 'top' && this.entity.z > 0) {
+            // 例: 高さ32pxにつき10% (0.1) 拡大
+            currentScale += (this.entity.z / 32) * 0.1;
+        }
+
+        const dw = this.sw * currentScale;
+        const dh = this.sh * currentScale;
 
         layer.spPut(
             img,

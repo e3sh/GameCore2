@@ -41,6 +41,8 @@ export class GameCore {
         this.particles = new ParticleSystem(this);
         this.events = new EventBus();
 
+        this.viewMode = sysParam.viewMode || 'side'; // 'side' または 'top'
+
         this.status = {
             isRunning: false,
             lastTime: 0,
