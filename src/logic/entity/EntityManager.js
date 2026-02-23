@@ -104,7 +104,7 @@ export class Entity {
                     drawHandled = true;
                 } else if (typeof b.render === 'function') {
                     // WindowBehavior 向け: 簡易的な描画フォールバック
-                    const isUI = this.behaviors.some(ub => ub.isUI);
+                    const isUI = b.isUI || false;
                     let drawX = this.x;
                     let drawY = this.y;
 
@@ -123,7 +123,7 @@ export class Entity {
 
         // どのBehaviorも描画を行わなかった場合、デフォルトの矩形を表示
         if (!drawHandled) {
-            const isUI = this.behaviors.some(b => b.isUI);
+            const isUI = false; // デフォルトは常にワールド空間
             let drawX = this.x;
             let drawY = this.y;
 
@@ -150,6 +150,7 @@ export class EntityManager {
         this.engine = engine;
         this.entities = [];
         this.collision = new CollisionSystem();
+        this.updateEnabled = true; // trueなら更新処理を行う
     }
 
     /**
@@ -170,6 +171,8 @@ export class EntityManager {
      * @param {number} dt - デルタタイム
      */
     update(dt) {
+        if (!this.updateEnabled) return;
+
         this.entities = this.entities.filter(e => {
             if (!e.alive) {
                 this.collision.unregister(e);
@@ -199,7 +202,9 @@ export class EntityManager {
                 return a.zOrder - b.zOrder;
             }
             if (this.engine.viewMode === 'top') {
-                return a.y - b.y;
+                const sortA = a.y + Math.max(0, a.z || 0) * 1.5; // Zの上昇により優先度をさらに下げる（手前に描画する）
+                const sortB = b.y + Math.max(0, b.z || 0) * 1.5;
+                return sortA - sortB;
             }
             return 0;
         });

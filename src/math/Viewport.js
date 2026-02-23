@@ -10,6 +10,8 @@ export class Viewport {
         this.worldY = 0;
         this.target = null;
         this.damping = 0.1; // カメラ追従の滑らかさ
+        this.targetOffsetX = 0; // ターゲットからのカメラのXオフセット
+        this.targetOffsetY = 0; // ターゲットからのカメラのYオフセット
     }
 
     /**
@@ -26,8 +28,8 @@ export class Viewport {
      */
     update() {
         if (this.target) {
-            const destX = this.target.x - this.width / 2;
-            const destY = this.target.y - this.height / 2;
+            const destX = (this.target.x + this.targetOffsetX) - this.width / 2;
+            const destY = (this.target.y + this.targetOffsetY) - this.height / 2;
 
             this.worldX += (destX - this.worldX) * this.damping;
             this.worldY += (destY - this.worldY) * this.damping;
