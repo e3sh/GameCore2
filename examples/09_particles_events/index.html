@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>パーティクルとイベントシステム / Particles & Event System</title>
+    <style>
+        body {
+            background: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        canvas {
+            background: black;
+            border: 2px solid #444;
+            cursor: pointer;
+        }
+
+        .info {
+            margin-top: 10px;
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Particles & Event System</h1>
+    <canvas id="mainCanvas" width="640" height="400"></canvas>
+    <div class="info">Click to emit Particles / Events handled by EventBus</div>
+
+    <script type="module">
+        import { GameCore } from '../../src/core/gamecore.js';
+        import { Entity } from '../../src/logic/entity/EntityManager.js';
+        import { ParticleSystem } from '../../src/logic/systems/ParticleSystem.js';
+        import { UIElement } from '../../src/logic/ui/UIElement.js';
+
+        // --- UIクラスの例 ---
+        class MyButton extends UIElement {
+            constructor(text) {
+                super();
+                this.text = text;
+                this.bgColor = "#555";
+            }
+            onDraw(display) {
+                const layer = display.getLayer(0);
+                const pos = this.getGlobalPos();
+                layer.ctx.fillStyle = this.bgColor;
+                layer.ctx.fillRect(pos.x, pos.y, this.width, this.height);
+                layer.ctx.fillStyle = "white";
+                layer.ctx.font = "14px Arial";
+                layer.ctx.textAlign = "center";
+                layer.ctx.fillText(this.text, pos.x + this.width / 2, pos.y + 20);
+            }
+        }
+
+        const engine = new GameCore({
+            canvasId: "mainCanvas",
+            screen: [{ resolution: { w: 640, h: 400 } }]
+        });
+
+        // パーティクルシステムの追加
+        const ps = new ParticleSystem(1000);
+        const psEntity = new Entity();
+        psEntity.addBehavior(ps);
+        engine.entities.add(psEntity);
+
+        // イベントバスの利用例
+        engine.events.on('click', (data) => {
+            console.log("Global Event Received:", data);
+            for (let i = 0; i < 20; i++) {
+                ps.emit({
+                    x: data.x, y: data.y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 500 + Math.random() * 500,
+                    color: `hsl(${Math.random() * 360}, 70%, 70%)`
+                });
+            }
+            engine.sound.playScore(["C5", "C6"], 50, performance.now());
+        });
+
+        // クリックイベントの検知
+        document.getElementById('mainCanvas').addEventListener('mousedown', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            engine.events.emit('click', { x: e.clientX - rect.left, y: e.clientY - rect.top });
+        });
+
+        engine.run();
+    </script>
+</body>
+
+</html>

@@ -159,21 +159,159 @@ export class Beepcore {
         this.lfoSetting = { freq, type, depth };
     }
 
+    /**
+     * MML風の文字列を解析し、Beepcore内部のスコアデータ配列に変換します。
+     * @param {string} mmlString 
+     * @param {number} defaultInterval (ms) L4 相当の基準時間
+     * @returns {Array} score data
+     */
+    _parseMML(mmlString, defaultInterval) {
+        let score = [];
+        let octave = 4;
+        let defaultLength = 4; // L4デフォルト
+        let volume = 1.0;
+        let p = 0;
+
+        const str = mmlString.toUpperCase().replace(/\s+/g, '');
+
+        while (p < str.length) {
+            let char = str[p];
+            p++;
+
+            if (char === 'O') {
+                // Octave O1-O9
+                let numStr = "";
+                while (p < str.length && str[p] >= '0' && str[p] <= '9') {
+                    numStr += str[p];
+                    p++;
+                }
+                if (numStr !== "") octave = parseInt(numStr, 10);
+            } else if (char === 'L') {
+                // Length L1-L64
+                let numStr = "";
+                while (p < str.length && str[p] >= '0' && str[p] <= '9') {
+                    numStr += str[p];
+                    p++;
+                }
+                if (numStr !== "") defaultLength = parseInt(numStr, 10);
+            } else if (char === 'V') {
+                // Volume V0-V15
+                let numStr = "";
+                while (p < str.length && str[p] >= '0' && str[p] <= '9') {
+                    numStr += str[p];
+                    p++;
+                }
+                if (numStr !== "") volume = parseInt(numStr, 10) / 15.0;
+            } else if (char >= 'A' && char <= 'G') {
+                // Note
+                let noteName = char;
+                if (p < str.length && (str[p] === '#' || str[p] === '+' || str[p] === '-')) {
+                    if (str[p] === '#' || str[p] === '+') noteName += '#';
+                    // フラットは複雑になるため一旦シャープ置換などは省略（基本仕様）
+                    p++;
+                }
+                noteName += octave;
+
+                // 独自の長さ指定が音符直後にあるか (C8 など)
+                let noteLength = defaultLength;
+                let numStr = "";
+                while (p < str.length && str[p] >= '0' && str[p] <= '9') {
+                    numStr += str[p];
+                    p++;
+                }
+                if (numStr !== "") noteLength = parseInt(numStr, 10);
+
+                // 付点 (C4. など)
+                let dot = 1.0;
+                if (p < str.length && str[p] === '.') {
+                    dot = 1.5;
+                    p++;
+                }
+
+                // 実際の長さを計算 (L4 を defaultInterval とする)
+                const playTime = (defaultInterval * (4.0 / noteLength)) * dot;
+
+                score.push({
+                    name: noteName,
+                    freq: 0,
+                    vol: volume,
+                    time: playTime,
+                    played: false
+                });
+            } else if (char === 'R') {
+                // Rest (休符)
+                let noteLength = defaultLength;
+                let numStr = "";
+                while (p < str.length && str[p] >= '0' && str[p] <= '9') {
+                    numStr += str[p];
+                    p++;
+                }
+                if (numStr !== "") noteLength = parseInt(numStr, 10);
+
+                let dot = 1.0;
+                if (p < str.length && str[p] === '.') {
+                    dot = 1.5;
+                    p++;
+                }
+                const playTime = (defaultInterval * (4.0 / noteLength)) * dot;
+
+                // 休符は vol=0 の特殊な音として登録
+                score.push({
+                    name: 'R',
+                    freq: 0, // 0にすると発音されない
+                    vol: 0,
+                    time: playTime,
+                    played: false
+                });
+            } else if (char === 'T') {
+                // Tempo T30-300 (BeepcoreのMMLではintervalの変動ではなく省略・非対応とするか、全体速度を乗算する。ここでは無視して次へ進める)
+                let numStr = "";
+                while (p < str.length && str[p] >= '0' && str[p] <= '9') {
+                    numStr += str[p];
+                    p++;
+                }
+            }
+        }
+        return score;
+    }
+
     playScore(namelist, interval = 100, now) {
+        let score = [];
+
+        if (typeof namelist === 'string') {
+            const hasMmlChars = /[OLVRT]/i.test(namelist);
+            if (hasMmlChars) {
+                // MMLフォーマットとして解釈
+                score = this._parseMML(namelist, interval);
+            } else {
+                // 単純なスペース区切りの音名リスト（従来の仕様のフォールバック）
+                const names = namelist.trim().split(/\s+/);
+                score = names.map(name => ({
+                    name,
+                    freq: 0,
+                    vol: 1.0,
+                    time: interval,
+                    played: false
+                }));
+            }
+        } else if (Array.isArray(namelist)) {
+            // 配列の場合は従来通り
+            score = namelist.map(name => ({
+                name,
+                freq: 0,
+                vol: 1.0,
+                time: interval,
+                played: false
+            }));
+        }
+
         // チャタリング防止: 100ms以内の同一メロディ再生を無視
-        const key = namelist.join(',');
+        const key = Array.isArray(namelist) ? namelist.join(',') : String(namelist);
         if (this._lastPlayKey === key && (now - this._lastPlayTime < 100)) {
             return;
         }
         this._lastPlayKey = key;
         this._lastPlayTime = now;
-
-        const score = namelist.map(name => ({
-            name,
-            freq: 0,
-            vol: 1.0,
-            time: interval
-        }));
 
         let note = this.notePool.pop() || new SoundNote(this.ctx, this.masterVol, this.dest);
         note.alive = true;

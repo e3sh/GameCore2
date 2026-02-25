@@ -1,4 +1,4 @@
-import { CollisionSystem } from '../collision/CollisionSystem.js?v=10';
+import { CollisionSystem } from '../collision/CollisionSystem.js';
 
 /**
  * 全てのゲームオブジェクトの基底クラス。
@@ -20,6 +20,7 @@ export class Entity {
         this.color = 'white';
         this.behaviors = [];
         this.zOrder = 0; // 基本の描画順
+        this.physicalHeight = 0; // 物理的な高さ（ジャンプで飛び越えられるかの判定用）
         this.engine = null; // EntityManagerからセットされる
     }
 
@@ -151,6 +152,16 @@ export class EntityManager {
         this.entities = [];
         this.collision = new CollisionSystem();
         this.updateEnabled = true; // trueなら更新処理を行う
+    }
+
+    /**
+     * 全てのEntityを削除し、状態をリセットします。
+     * シーン遷移時などに使用します。
+     * @method clear
+     */
+    clear() {
+        this.entities = [];
+        this.collision.clear();
     }
 
     /**

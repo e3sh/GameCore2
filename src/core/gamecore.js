@@ -1,5 +1,5 @@
 import { DisplayManager } from './display/DisplayManager.js';
-import { SpriteSystem } from './display/SpriteSystem.js?v=13';
+import { SpriteSystem } from './display/SpriteSystem.js';
 import { InputDevices } from './input/InputDevices.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { AssetManager } from './assets/AssetManager.js';
@@ -100,10 +100,13 @@ export class GameCore {
     draw() {
         this.display.clearAll();
 
-        this.scenes.draw(this.display);
+        // エンティティ、パーティクル、スプライトを先に描画（ゲーム本編）
         this.particles.draw(this.display, this.viewport);
         this.entities.draw(this.display, this.viewport);
         this.sprite.draw(this.display, this.viewport);
+
+        // シーン（UIやオーバーレイ）を最後に描画して最前面に表示
+        this.scenes.draw(this.display);
 
         this.display.present();
     }

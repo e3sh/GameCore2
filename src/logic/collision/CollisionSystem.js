@@ -11,6 +11,14 @@ export class CollisionSystem {
     }
 
     /**
+     * 登録された全てのEntityをクリアします。
+     * @method clear
+     */
+    clear() {
+        this.entities = [];
+    }
+
+    /**
      * 衝突判定の対象としてEntityを登録します。
      * @method register
      * @param {Entity} entity
@@ -71,11 +79,15 @@ export class CollisionSystem {
      */
     getCollisionData(a, b) {
         // トップビューなどのZ軸を考慮した判定
-        // Z座標の差が大きい場合（例：ジャンプ中など）は衝突していないとみなす。
-        // （サイドビューの場合はz=0が保たれるためこの判定をパスする想定）
-        const zThreshold = 1; // 衝突とみなす高さの許容差（1にすることで少しでも浮けば回避可能にする）
-        if (Math.abs((a.z || 0) - (b.z || 0)) > zThreshold) {
-            return null; // 高さが違いすぎるため衝突しない
+        // physicalHeight（厚み）を考慮した範囲が重なっているか判定
+        const az1 = a.z || 0;
+        const az2 = az1 + (a.physicalHeight || 0);
+        const bz1 = b.z || 0;
+        const bz2 = bz1 + (b.physicalHeight || 0);
+
+        // Z軸で重なりがない場合は衝突しない
+        if (az2 < bz1 || bz2 < az1) {
+            return null;
         }
 
         const aHalfW = (a.width || 32) / 2;

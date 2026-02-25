@@ -1,3 +1,5 @@
+import { Entity } from '../entity/EntityManager.js';
+
 /**
  * @class MapLoader
  * @description
@@ -50,25 +52,32 @@ export class MapLoader {
         const data = layer.data;
         const width = layer.width;
 
+        // 背景描画用のEntityを登録 (TilemapRendererBehaviorが登録されている前提)
+        const bgBehaviorClass = this.behaviors.get('TilemapRendererBehavior');
+        if (bgBehaviorClass) {
+            const bgEntity = new Entity();
+            bgEntity.zOrder = -10;
+            bgEntity.addBehavior(new bgBehaviorClass(this.engine, layer, tileSize));
+            this.engine.entities.add(bgEntity);
+        }
+
+        // コリジョン用レイヤーなら、エンジン側の参照として保持する（GridCollision用）
+        if (layer.name === 'Collision') {
+            this.engine.collisionMap = layer;
+        }
+
         data.forEach((tileId, index) => {
             if (tileId === 0) return; // 0 は空
 
-            const x = (index % width) * tileSize;
-            const y = Math.floor(index / width) * tileSize;
+            const startX = (index % width) * tileSize;
+            const startY = Math.floor(index / width) * tileSize;
 
-            // タイルレイヤーはパフォーマンスのため SpriteSystem に登録
-            this.engine.sprite.createItem(tileId, x, y);
-
-            // 衝突判定用の不可視の壁を CollisionSystem に直接登録
-            this.engine.entities.collision.register({
-                x: x,
-                y: y,
-                width: tileSize,
-                height: tileSize,
-                isSolid: true,
-                collisionEnabled: true,
-                onCollision: () => { } // 壁自体は衝突イベントで動かない
-            });
+            // 壁(ID:1, 2)はTilemapRendererBehaviorで統合描画するため、
+            // 個別のスプライトアイテムとして登録しない
+            if (tileId !== 1 && tileId !== 2) {
+                // 壁以外のタイルは背景としてSpriteSystemに登録
+                this.engine.sprite.createItem(tileId, startX, startY);
+            }
         });
     }
 
@@ -96,10 +105,13 @@ export class MapLoader {
             }
 
             const entity = Factory(parsedProps);
-            entity.x = objData.x || 0;
-            entity.y = objData.y || 0;
-            if (objData.width) entity.width = objData.width;
-            if (objData.height) entity.height = objData.height;
+            const w = objData.width || 32;
+            const h = objData.height || 32;
+            entity.width = w;
+            entity.height = h;
+            // Tiled等のオブジェクトは左上座標(x,y)で定義されることが多いため、中心座標に変換する
+            entity.x = (objData.x || 0) + (w / 2);
+            entity.y = (objData.y || 0) + (h / 2);
             entity.tag = objData.name || objData.tag || "";
 
             // Behavior の動的追加

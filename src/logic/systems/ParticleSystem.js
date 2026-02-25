@@ -13,12 +13,20 @@ export class ParticleSystem extends Behavior {
         this.maxParticles = maxParticles;
     }
 
+    /**
+     * 現在のパーティクルをすべて消去します。
+     * @method clear
+     */
+    clear() {
+        this.particles = [];
+    }
+
     emit(config) {
         if (this.particles.length >= this.maxParticles) {
             this.particles.shift();
         }
 
-        this.particles.push({
+        const particle = {
             x: config.x || 0,
             y: config.y || 0,
             vx: config.vx || 0,
@@ -30,8 +38,8 @@ export class ParticleSystem extends Behavior {
             imageKey: config.imageKey || null,
             sx: config.sx || 0,
             sy: config.sy || 0,
-            sw: config.sw || 32,
-            sh: config.sh || 32,
+            sw: config.sw !== undefined ? config.sw : 32,
+            sh: config.sh !== undefined ? config.sh : 32,
             z: config.z !== undefined ? config.z : 1.0,
             rotation: config.rotation || 0,
             spin: config.spin || 0, // 毎フレームの回転加算量
@@ -42,8 +50,9 @@ export class ParticleSystem extends Behavior {
 
             // 物理系
             gravity: config.gravity || 0,
-            drag: config.drag || 1.0
-        });
+            drag: config.drag !== undefined ? config.drag : 1.0
+        };
+        this.particles.push(particle);
     }
 
     update(dt) {
@@ -72,7 +81,7 @@ export class ParticleSystem extends Behavior {
 
         this.particles.forEach(p => {
             const screen = viewport.worldToScreen(p.x, p.y);
-            const alpha = p.life / p.maxLife;
+            const alpha = Math.max(0, p.life / p.maxLife);
 
             if (p.imageKey && this.engine && this.engine.assets) {
                 // --- スプライト描画モード ---
@@ -80,6 +89,7 @@ export class ParticleSystem extends Behavior {
                 if (img) {
                     const dw = p.sw * p.z;
                     const dh = p.sh * p.z;
+                    // spPut のシグネチャ: img, sx, sy, sw, sh, dx, dy, dw, dh, m11, m12, m21, m22, btx, bty, alpha, rotation
                     layer.spPut(
                         img,
                         p.sx, p.sy, p.sw, p.sh, // Source: 切り出し領域
@@ -94,7 +104,7 @@ export class ParticleSystem extends Behavior {
                 // --- フォールバック（矩形描画モード） ---
                 layer.ctx.globalAlpha = alpha;
                 layer.ctx.fillStyle = p.color;
-                layer.ctx.fillRect(screen.x, screen.y, p.size, p.size);
+                layer.ctx.fillRect(screen.x - p.size / 2, screen.y - p.size / 2, p.size, p.size);
                 layer.ctx.globalAlpha = 1.0;
             }
         });

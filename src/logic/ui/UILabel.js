@@ -16,14 +16,18 @@ export class UILabel extends UIElement {
         this.baseline = "top";
     }
 
-    onDraw(display) {
-        const layer = display.getLayer(0); // 基本的に最背面レイヤーか特定レイヤー
+    onDraw(display, layerIndex = 0) {
+        const layer = display.getLayer(layerIndex);
+        if (!layer) return;
         const pos = this.getGlobalPos();
 
-        layer.ctx.fillStyle = this.color;
-        layer.ctx.font = `${this.fontSize}px ${this.fontFamily}`;
-        layer.ctx.textAlign = this.align;
-        layer.ctx.textBaseline = this.baseline;
-        layer.ctx.fillText(this.text, pos.x, pos.y);
+        const ctx = layer.ctx;
+        ctx.save();
+        ctx.fillStyle = this.color;
+        ctx.font = `${this.fontSize}px ${this.fontFamily}`;
+        ctx.textAlign = this.align;
+        ctx.textBaseline = this.baseline;
+        ctx.fillText(this.text, pos.x, pos.y);
+        ctx.restore();
     }
 }

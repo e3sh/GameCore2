@@ -62,6 +62,14 @@ export class SpriteSystem {
     }
 
     /**
+     * 全てのスプライトアイテムを消去します。
+     * @method clear
+     */
+    clear() {
+        this.items = [];
+    }
+
+    /**
      * スプライトパターンの設定を行います。
      * @method setPattern
      * @param {string} id - パターンのID

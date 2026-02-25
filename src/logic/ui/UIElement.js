@@ -31,10 +31,10 @@ export class UIElement {
         this.children.forEach(c => c.update(dt, engine));
     }
 
-    draw(display) {
+    draw(display, layerIndex = 0) {
         if (!this.visible) return;
-        this.onDraw(display);
-        this.children.forEach(c => c.draw(display));
+        this.onDraw(display, layerIndex);
+        this.children.forEach(c => c.draw(display, layerIndex));
     }
 
     onDraw(display) {

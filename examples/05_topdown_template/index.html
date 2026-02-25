@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トップビュー：実戦テンプレート / Top-Down Action Template</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+            image-rendering: pixelated;
+            /* ドット絵をくっきり表示 */
+            /* フルスクリーン時のスケールアップ対応 */
+            width: 100%;
+            height: 100%;
+            max-width: 640px;
+            /* デスクトップ通常表示時は x2 スケール程度の見やすさに */
+            max-height: 480px;
+            object-fit: contain;
+        }
+
+        #gameCanvas:fullscreen {
+            max-width: none;
+            max-height: none;
+        }
+
+        #gameCanvas:-webkit-full-screen {
+            max-width: none;
+            max-height: none;
+        }
+
+        #debugInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px;
+            font-family: monospace;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="320" height="240"></canvas>
+    <div id="debugInfo">Loading...</div>
+
+    <!-- モジュールとしてメインスクリプトを読み込み -->
+    <script type="module" src="./main.js"></script>
+</body>
+
+</html>
