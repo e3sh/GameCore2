@@ -23,6 +23,15 @@ export class Viewport {
     }
 
     /**
+     * @method lookAt
+     * 指定した座標が画面中央に来るようにカメラを強制移動します。
+     */
+    lookAt(x, y) {
+        this.worldX = x - this.width / 2;
+        this.worldY = y - this.height / 2;
+    }
+
+    /**
      * @method update
      * カメラの追いかけ処理を更新。
      */

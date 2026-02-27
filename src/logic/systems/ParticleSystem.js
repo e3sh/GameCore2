@@ -77,7 +77,7 @@ export class ParticleSystem extends Behavior {
     }
 
     draw(display, viewport) {
-        const layer = display.getLayer(0);
+        const layer = display.getLayer(2); // VFX Layer (BGは0, Actorは1)
 
         this.particles.forEach(p => {
             const screen = viewport.worldToScreen(p.x, p.y);

@@ -108,6 +108,12 @@ export class DisplayManager {
             return new Layer(res.w, res.h);
         });
 
+        // メインキャンバスのサイズを最初のレイヤーの解像度に合わせる
+        if (screenParams.length > 0) {
+            this.mainCanvas.width = screenParams[0].resolution.w;
+            this.mainCanvas.height = screenParams[0].resolution.h;
+        }
+
         this.width = this.mainCanvas.width;
         this.height = this.mainCanvas.height;
     }

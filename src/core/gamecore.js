@@ -63,7 +63,7 @@ export class GameCore {
         const loop = (time) => {
             if (!this.status.isRunning) return;
 
-            this.status.deltaTime = time - this.status.lastTime;
+            this.status.deltaTime = Math.min(time - this.status.lastTime, 100); // 最大100msに制限
             this.status.lastTime = time;
             this.status.frame++;
 
@@ -100,9 +100,9 @@ export class GameCore {
     draw() {
         this.display.clearAll();
 
-        // エンティティ、パーティクル、スプライトを先に描画（ゲーム本編）
-        this.particles.draw(this.display, this.viewport);
+        // 描画順序: 背景(Entities L0) -> アクター(Entities L1+) -> パーティクル(L2) -> スプライトシステム
         this.entities.draw(this.display, this.viewport);
+        this.particles.draw(this.display, this.viewport);
         this.sprite.draw(this.display, this.viewport);
 
         // シーン（UIやオーバーレイ）を最後に描画して最前面に表示

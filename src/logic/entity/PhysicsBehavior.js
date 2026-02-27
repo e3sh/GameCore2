@@ -7,11 +7,11 @@ import { Behavior } from './Behavior.js';
 export class PhysicsBehavior extends Behavior {
     constructor(params = {}) {
         super();
-        this.gravity = params.gravity || 0.5;
-        this.friction = params.friction || 0.98;
+        this.gravity = params.gravity || 0.4;
+        this.friction = params.friction || 0.95;
         this.bounce = params.bounce || 0;
-        this.isGrounded = false;
-        this._nextGrounded = false;
+        this.isGrounded = true;
+        this._nextGrounded = true;
         // 以前の groundY は廃止し、実際の地形との衝突に依存する
     }
 
@@ -44,14 +44,6 @@ export class PhysicsBehavior extends Behavior {
             e.vy += this.gravity * (dt / 16);
         }
 
-        // 画面外落下へのフォールバック（デバッグ用）
-        if (e.y > 2000) {
-            e.y = 0;
-            e.vy = 0;
-            // zもリセット
-            e.z = 0;
-            e.vz = 0;
-        }
     }
 
     onCollision(other, colData) {
